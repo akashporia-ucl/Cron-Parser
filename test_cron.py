@@ -175,6 +175,11 @@ def test_generate_step_value_invalid():
     assert generate_step_value(10, 1, 2) == []
     assert generate_step_value(5, 5, 1) == ['5']
 
+def test_generate_step_value_zero_step():
+    """Test step value of zero"""
+    with pytest.raises(ValueError):
+        generate_step_value(1, 10, 0)
+
 # Tests for expand_cron_field
 def test_expand_cron_field_valid():
     """Test valid cron field expansion"""
@@ -246,6 +251,20 @@ def test_main_validation_failure(mock_print):
     mock_print.assert_any_call('Parsing cron expression: 61 0 * * *')
     mock_print.assert_any_call("Field 'minute' with value '61' is out of range (0, 59) or step value is invalid.")
     mock_print.assert_any_call("Cron expression is invalid.")
+
+@patch('sys.argv', ['cron.py', '5 0 * * *'])
+@patch('cron.int')
+@patch('builtins.print')
+def test_main_exception_handling(mock_print, mock_int):
+    """Test main function exception handling"""
+    # Make int() raise an exception during validation
+    mock_int.side_effect = ValueError("Invalid literal for int()")
+    
+    main()
+    
+    mock_print.assert_any_call("======================CRON PARSER======================")
+    mock_print.assert_any_call('Parsing cron expression: 5 0 * * *')
+    mock_print.assert_any_call("An error occurred while parsing the cron expression: Invalid literal for int()")
 
 if __name__ == '__main__':
     pytest.main([__file__])
